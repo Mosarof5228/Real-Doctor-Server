@@ -12,7 +12,7 @@ app.use(cors())
 console.log(process.env.DB_User)
 console.log(process.env.DB_Pass)
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_User}:${process.env.DB_Pass}@cluster0.cqf2amb.mongodb.net/?retryWrites=true&w=majority`;
 
 
@@ -33,18 +33,43 @@ async function run() {
 
         const serviceCollection = client.db('doctor-service').collection('services')
 
+        const bookingsCollection = client.db('doctor-service').collection('bookings')
+
         app.get('/services', async (req, res) => {
             const cursor = serviceCollection.find();
             const result = await cursor.toArray();
             res.send(result);
         })
 
+        app.get('/bookings', async (req, res) => {
+            console.log(req.query.email)
+            query = {};
+            if (req.query?.email) {
+                query = { email: req.query.email }
+            }
+            const cursor = bookingsCollection.find(query);
+            const result = await cursor.toArray();
+            res.send(result)
+        })
+
+        app.get('/services/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await serviceCollection.findOne(query)
+            res.send(result)
+        })
+
 
 
         app.post('/services', async (req, res) => {
             const newService = req.body;
-            console.log(newService);
             const result = await serviceCollection.insertOne(newService);
+            res.send(result);
+        })
+
+        app.post('/bookings', async (req, res) => {
+            const newBooking = req.body;
+            const result = await bookingsCollection.insertOne(newBooking);
             res.send(result);
         })
 
